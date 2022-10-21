@@ -9,11 +9,12 @@ namespace UnityEditor.Tilemaps
     static class TilingBrushState
     {
 
-        public static bool executing = false;
-        public static bool held = false;
+        public static bool isExecuting = false;
+        public static bool isHeld = false;
+        public static bool isMoving = false;
         public static BoundsInt palettePosition;
-
         public static Vector3Int tileStartPosition;
+
     }
 
     /// <summary>
@@ -31,9 +32,15 @@ namespace UnityEditor.Tilemaps
         /// <param name="position">The coordinates of the cell to paint data to.</param>
         public override void Paint(GridLayout grid, GameObject brushTarget, Vector3Int position)
         {
+            // Execute normal behavior if moving tiles
+            if (TilingBrushState.isMoving)
+            {
+                base.Paint(grid, brushTarget, position);
+                return;
+            }
 
             // Mark the start position (if mouse was just clicked)
-            if (!TilingBrushState.held) TilingBrushState.tileStartPosition = position;
+            if (!TilingBrushState.isHeld) TilingBrushState.tileStartPosition = position;
 
             // Get difference between current position and the first tile laid down
             var diff = position - TilingBrushState.tileStartPosition;
@@ -77,6 +84,36 @@ namespace UnityEditor.Tilemaps
             // Record bounds (size of selection)
             TilingBrushState.palettePosition = position;
         }
+
+        /// <summary>
+        /// Starts the movement of tiles and GameObjects from a given position within the selected layers.
+        /// </summary>
+        /// <param name="grid">Grid used for layout.</param>
+        /// <param name="brushTarget">Target of the Move operation. By default the currently selected GameObject.</param>
+        /// <param name="position">The coordinates of the cell to move data from.</param>
+        public override void MoveStart(GridLayout grid, GameObject brushTarget, BoundsInt position)
+        {
+            // Execute normal behavior
+            base.MoveStart(grid, brushTarget, position);
+
+            // detect movement
+            TilingBrushState.isMoving = true;
+        }
+
+        /// <summary>
+        /// Ends the movement of tiles and GameObjects to a given position within the selected layers.
+        /// </summary>
+        /// <param name="grid">Grid used for layout.</param>
+        /// <param name="brushTarget">Target of the Move operation. By default the currently selected GameObject.</param>
+        /// <param name="position">The coordinates of the cell to move data to.</param>
+        public override void MoveEnd(GridLayout grid, GameObject brushTarget, BoundsInt position)
+        {
+            // Execute normal behavior
+            base.MoveEnd(grid, brushTarget, position);
+
+            // detect movement
+            TilingBrushState.isMoving = false;
+        }
     }
 
     /// <summary>
@@ -108,8 +145,8 @@ namespace UnityEditor.Tilemaps
 
             // Record the execution state of the brush (executing == currently drawing to tilemap)
             // held iif previously executing and currently executing
-            TilingBrushState.held = executing && TilingBrushState.executing;
-            TilingBrushState.executing = executing;
+            TilingBrushState.isHeld = executing && TilingBrushState.isExecuting;
+            TilingBrushState.isExecuting = executing;
         }
     }
 }
