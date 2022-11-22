@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 
+#if UNITY_EDITOR
 namespace UnityEditor.Tilemaps
 {
     /// <summary>
@@ -150,3 +151,4 @@ namespace UnityEditor.Tilemaps
         }
     }
 }
+#endif
